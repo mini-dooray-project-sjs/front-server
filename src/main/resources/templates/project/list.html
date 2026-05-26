@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로젝트 목록</title>
+    <style>
+        /* 기존 스타일 유지 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 40px;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #ffffff;
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .header-actions { display: flex; align-items: center; gap: 15px; }
+        .user-info { font-size: 1.1em; font-weight: bold; color: #0056b3; margin-right: 10px; }
+        .role-badge { font-size: 0.8em; background-color: #e9ecef; color: #495057; padding: 4px 8px; border-radius: 12px; margin-left: 8px; }
+
+        .btn { padding: 8px 16px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; transition: all 0.2s; border: 1px solid transparent; display: inline-block; }
+        .btn-primary { background-color: #0056b3; color: white; }
+        .btn-primary:hover { background-color: #004085; }
+        .btn-outline { background-color: white; color: #495057; border-color: #ced4da; }
+        .btn-outline:hover { background-color: #f8f9fa; }
+
+        table { width: 100%; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
+        th, td { padding: 15px 20px; text-align: left; border-bottom: 1px solid #e9ecef; }
+        th { background-color: #f1f3f5; font-weight: 600; color: #495057; }
+        .clickable-row { transition: background-color 0.2s; }
+        .clickable-row:hover { background-color: #fff9db; cursor: pointer; }
+
+        .badge-admin { background-color: #ffe3e3; color: #c92a2a; padding: 5px 10px; border-radius: 15px; font-size: 0.85em; font-weight: bold; }
+        .badge-user { background-color: #e3fafc; color: #0b7285; padding: 5px 10px; border-radius: 15px; font-size: 0.85em; font-weight: bold; }
+
+        /* 💡 모달(Modal) 전용 스타일 추가 */
+        .modal-overlay {
+            display: none; /* 평소에는 숨김 */
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            width: 350px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .modal-content h3 { margin-top: 0; margin-bottom: 20px; color: #333; }
+        .modal-content input {
+            width: 100%; padding: 10px; margin-bottom: 20px;
+            border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box;
+        }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="header-container">
+    <h2>내 프로젝트 목록</h2>
+
+    <div class="header-actions">
+        <div class="user-info">
+            반갑습니다, <span th:text="${userId}">사용자아이디</span> 님!
+            <span class="role-badge" th:text="${role}">USER</span>
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="openModal()">+ 프로젝트 생성</button>
+
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button type="submit" class="btn btn-outline">로그아웃</button>
+        </form>
+    </div>
+</div>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>프로젝트 이름</th>
+        <th>상태 (Status)</th>
+        <th>내 권한 (Role)</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="project : ${projects}"
+        class="clickable-row"
+        th:onclick="|location.href='@{/projects/{id}(id=${project.projectId})}'|">
+        <td th:text="${project.projectId}">1</td>
+        <td th:text="${project.name}" style="font-weight: bold; color: #0056b3;">미니두레이 개발</td>
+        <td th:text="${project.status}">ACTIVE</td>
+        <td>
+            <span th:if="${project.admin}" class="badge-admin">관리자 (Admin)</span>
+            <span th:unless="${project.admin}" class="badge-user">일반 멤버 (User)</span>
+        </td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(projects)}">
+        <td colspan="4" style="text-align: center; color: #868e96; padding: 30px;">
+            참여 중인 프로젝트가 없습니다. 우측 상단의 생성 버튼을 눌러보세요!
+        </td>
+    </tr>
+    </tbody>
+</table>
+
+<div id="projectModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>새 프로젝트 생성</h3>
+        <form th:action="@{/projects}" method="post">
+            <input type="text" name="name" placeholder="프로젝트 이름을 입력하세요" required autofocus>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeModal()">취소</button>
+                <button type="submit" class="btn btn-primary">생성하기</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById('projectModal');
+
+    function openModal() {
+        modal.style.display = 'flex';
+        // 모달이 열리면 입력창에 바로 커서가 가도록 처리
+        setTimeout(() => modal.querySelector('input').focus(), 100);
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+        modal.querySelector('input').value = ''; // 닫을 때 입력값 초기화
+    }
+
+    // 모달창 바깥(어두운 배경)을 클릭해도 창이 닫히도록 설정
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+</script>
+
+</body>
+</html>

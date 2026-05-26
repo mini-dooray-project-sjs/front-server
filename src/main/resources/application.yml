@@ -1,3 +1,22 @@
 spring:
   application:
-    name: minidooray-front
+    name: front
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: info
+
+api:
+  gateway:
+    url: http://localhost:8000
+  account:
+    url: ${api.gateway.url}/api/accounts
+  task:
+    url: ${api.gateway.url}/api/tasks

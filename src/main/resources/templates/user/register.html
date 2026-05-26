@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>회원가입</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .register-container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 400px;
+        }
+        .register-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333333;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        .register-subtitle {
+            font-size: 14px;
+            color: #868e96;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #0056b3;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background-color: #0056b3;
+            border: none;
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            background-color: #004085;
+        }
+        .error-message {
+            background-color: #ffe3e3;
+            color: #c92a2a;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .login-link {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #0056b3;
+            text-decoration: none;
+        }
+        .login-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="register-container">
+    <div class="register-title">회원가입</div>
+    <div class="register-subtitle">서비스 이용을 위해 계정을 생성하세요.</div>
+
+    <div class="error-message" th:if="${param.error} != null">
+        회원가입에 실패했습니다. 다시 시도해 주세요.
+    </div>
+
+    <form th:action="@{/users/register}" method="post">
+        <div class="form-group">
+            <label for="userId">아이디 (ID)</label>
+            <input type="text" id="userId" name="userId" placeholder="사용할 아이디를 입력하세요" required>
+        </div>
+
+        <div class="form-group">
+            <label for="password">비밀번호 (Password)</label>
+            <input type="password" id="password" name="password" placeholder="비밀번호를 입력하세요" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">이메일 (Email)</label>
+            <input type="email" id="email" name="email" placeholder="example@email.com" required>
+        </div>
+
+        <button type="submit" class="btn-submit">계정 생성하기</button>
+    </form>
+
+    <a th:href="@{/login}" class="login-link">이미 계정이 있으신가요? 로그인하기</a>
+</div>
+
+</body>
+</html>

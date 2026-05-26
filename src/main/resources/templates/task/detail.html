@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${task.title} + ' - 업무 상세'">업무 상세</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 40px; background-color: #f8f9fa; color: #333; }
+
+        /* 헤더 영역 */
+        .header-container { display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; padding: 20px 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .task-title-area { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .task-id-badge { background-color: #e9ecef; color: #495057; padding: 5px 10px; border-radius: 6px; font-weight: bold; font-size: 0.9em; }
+        .task-title { margin: 0; font-size: 22px; font-weight: bold; color: #1f2937; }
+
+        .btn-back { text-decoration: none; background-color: #f1f3f5; color: #495057; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9em; transition: 0.2s; }
+        .btn-back:hover { background-color: #e9ecef; }
+
+        /* 액션 버튼 */
+        .btn-sm { padding: 6px 12px; border-radius: 4px; font-size: 0.85em; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-edit { background-color: #fcc419; color: #fff; }
+        .btn-edit:hover { background-color: #fab005; }
+        .btn-delete { background-color: #fa5252; color: #fff; }
+        .btn-delete:hover { background-color: #e03131; }
+
+        /* 메인 레이아웃 Grid */
+        .dashboard-grid { display: grid; grid-template-columns: 7fr 3fr; gap: 25px; }
+        .card { background-color: #ffffff; border-radius: 8px; padding: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .card-title { margin-top: 0; margin-bottom: 15px; font-size: 16px; font-weight: bold; border-bottom: 2px solid #f1f3f5; padding-bottom: 10px; color: #868e96; }
+
+        /* 본문 영역 */
+        .task-content { font-size: 15px; line-height: 1.6; color: #343a40; white-space: pre-wrap; }
+
+        /* 댓글 영역 스타일 */
+        .comment-item { border-bottom: 1px solid #e9ecef; padding: 15px 0; }
+        .comment-item:last-child { border-bottom: none; }
+        .comment-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .comment-author { font-weight: 600; color: #0056b3; font-size: 0.95em; }
+        .comment-body { font-size: 0.95em; line-height: 1.5; color: #495057; white-space: pre-wrap; }
+
+        .comment-form-box { background-color: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .comment-form-box textarea { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; resize: vertical; min-height: 60px; font-size: 14px; margin-bottom: 10px; }
+        .btn-submit-comment { background-color: #0056b3; color: white; padding: 8px 16px; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; float: right; }
+        .btn-submit-comment:hover { background-color: #004085; }
+        .clearfix::after { content: ""; clear: both; display: table; }
+
+        /* 사이드바 요소 */
+        .milestone-box { background-color: #e3fafc; color: #0b7285; padding: 10px 15px; border-radius: 6px; font-weight: 600; display: inline-block; margin-bottom: 10px; }
+        .tag-badge { display: inline-block; background-color: #f3f0ff; color: #7048e8; font-size: 0.85em; padding: 4px 10px; border-radius: 4px; margin-right: 6px; margin-bottom: 6px; font-weight: 600; }
+
+        /* 수정 모달창 및 폼 컨트롤 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background-color: white; padding: 30px; border-radius: 8px; width: 500px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .modal-content h3 { margin-top: 0; margin-bottom: 20px; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 0.9em; font-weight: 600; color: #495057; }
+        .form-group input[type="text"], .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        .form-group textarea { resize: vertical; min-height: 120px; }
+
+        /* 체크박스 그룹 스타일 */
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
+        .checkbox-item { display: flex; align-items: center; font-size: 14px; color: #495057; }
+        .checkbox-item input { margin-right: 5px; }
+
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+        .btn-modal-cancel { background-color: #f1f3f5; color: #495057; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-modal-submit { background-color: #0056b3; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="header-container">
+    <div class="task-title-area">
+        <span class="task-id-badge" th:text="'#' + ${task.taskId}">#10</span>
+        <h1 class="task-title" th:text="${task.title}">업무 제목</h1>
+
+        <div style="display: flex; gap: 8px; margin-left: 20px;">
+            <button type="button" class="btn-sm btn-edit" onclick="openEditModal()">업무 수정</button>
+
+            <form th:action="@{/projects/{projectId}/tasks/{taskId}(projectId=${task.projectId}, taskId=${task.taskId})}" method="post" style="margin: 0;" onsubmit="return confirm('이 업무를 삭제하시겠습니까?\n삭제 후 복구할 수 없습니다.');">
+                <input type="hidden" name="_method" value="delete">
+                <button type="submit" class="btn-sm btn-delete">업무 삭제</button>
+            </form>
+        </div>
+    </div>
+
+    <a th:href="@{/projects/{projectId}(projectId=${task.projectId})}" class="btn-back">← 프로젝트로 돌아가기</a>
+</div>
+
+<div class="dashboard-grid">
+
+    <div class="left-column">
+        <div class="card" style="min-height: 250px;">
+            <div class="card-title">업무 내용 (Content)</div>
+            <div class="task-content" th:text="${task.content}">
+                업무 상세 내용이 이곳에 표시됩니다.
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">댓글 (<span th:text="${#lists.size(comments)}">0</span>)</div>
+
+            <div class="comment-list">
+                <div class="comment-item" th:each="comment : ${comments}">
+                    <div class="comment-header">
+                        <span class="comment-author" th:text="${comment.writerUserId}">작성자아이디</span>
+
+                        <div style="display: flex; gap: 5px;">
+                            <button type="button" class="btn-sm btn-edit" style="padding: 2px 8px; font-size: 0.75em;"
+                                    th:data-comment-id="${comment.commentId}"
+                                    th:data-comment-content="${comment.content}"
+                                    onclick="openEditCommentModal(this.getAttribute('data-comment-id'), this.getAttribute('data-comment-content'))">
+                                수정
+                            </button>
+
+                            <form th:action="@{/projects/{projectId}/tasks/{taskId}/comments/{commentId}(projectId=${task.projectId}, taskId=${task.taskId}, commentId=${comment.commentId})}" method="post" style="margin: 0;" onsubmit="return confirm('이 댓글을 삭제하시겠습니까?');">
+                                <input type="hidden" name="_method" value="delete">
+                                <button type="submit" class="btn-sm btn-delete" style="padding: 2px 8px; font-size: 0.75em;">삭제</button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="comment-body" th:text="${comment.content}">댓글 내용입니다.</div>
+                </div>
+
+                <div th:if="${#lists.isEmpty(comments)}" style="color: #868e96; font-size: 0.9em; text-align: center; padding: 20px 0;">
+                    아직 등록된 댓글이 없습니다.
+                </div>
+            </div>
+
+            <div class="comment-form-box clearfix">
+                <form th:action="@{/projects/{projectId}/tasks/{taskId}/comments(projectId=${task.projectId}, taskId=${task.taskId})}" method="post">
+                    <textarea name="content" required placeholder="댓글을 입력하세요..."></textarea>
+                    <button type="submit" class="btn-submit-comment">댓글 작성</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="right-column">
+        <div class="card">
+            <div class="card-title">마일스톤 (Milestone)</div>
+            <div th:if="${task.milestone != null}" class="milestone-box">
+                <span th:text="${task.milestone.name}">스프린트 1</span>
+            </div>
+            <div th:if="${task.milestone == null}" style="color: #868e96; font-size: 0.9em;">
+                지정된 마일스톤이 없습니다.
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">태그 (Tags)</div>
+            <div th:if="${not #lists.isEmpty(task.tags)}">
+                <span class="tag-badge" th:each="tag : ${task.tags}" th:text="${tag.name}">기능 개발</span>
+            </div>
+            <div th:if="${#lists.isEmpty(task.tags)}" style="color: #868e96; font-size: 0.9em;">
+                등록된 태그가 없습니다.
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="editTaskModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>업무 수정</h3>
+        <form th:action="@{/projects/{projectId}/tasks/{taskId}(projectId=${task.projectId}, taskId=${task.taskId})}" method="post">
+            <div class="form-group">
+                <label for="title">업무 제목</label>
+                <input type="text" id="title" name="title" th:value="${task.title}" required>
+            </div>
+            <div class="form-group">
+                <label for="content">업무 내용</label>
+                <textarea id="content" name="content" required th:text="${task.content}"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="milestoneId">마일스톤 지정</label>
+                <select id="milestoneId" name="milestoneId">
+                    <option value="">-- 마일스톤 선택 해제 --</option>
+                    <option th:each="ms : ${milestones}"
+                            th:value="${ms.milestoneId}"
+                            th:text="${ms.name}"
+                            th:selected="${task.milestone != null and task.milestone.milestoneId == ms.milestoneId}">
+                    </option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>태그 선택</label>
+                <div class="checkbox-group">
+                    <label th:each="t : ${tags}" class="checkbox-item">
+                        <input type="checkbox" name="tagIds" th:value="${t.tagId}"
+                               th:checked="${task.tags != null and #lists.contains(task.tags.![tagId], t.tagId)}">
+                        <span th:text="${t.name}"></span>
+                    </label>
+                </div>
+                <div th:if="${#lists.isEmpty(tags)}" style="font-size: 13px; color: #868e96;">
+                    프로젝트에 등록된 태그가 없습니다.
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeEditModal()">취소</button>
+                <button type="submit" class="btn-modal-submit">수정 완료</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="editCommentModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>댓글 수정</h3>
+        <form id="editCommentForm" method="post">
+            <div class="form-group">
+                <textarea id="editCommentContent" name="content" required></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeEditCommentModal()">취소</button>
+                <button type="submit" class="btn-modal-submit">수정 완료</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const editModal = document.getElementById('editTaskModal');
+    const editCommentModal = document.getElementById('editCommentModal');
+
+    // 타임리프 변수 자바스크립트로 가져오기 (폼 URL 조립용)
+    const projectId = "[[${task.projectId}]]";
+    const taskId = "[[${task.taskId}]]";
+
+    // 업무 수정 모달
+    function openEditModal() { editModal.style.display = 'flex'; }
+    function closeEditModal() { editModal.style.display = 'none'; }
+
+    // 댓글 수정 모달
+    function openEditCommentModal(commentId, content) {
+        editCommentModal.style.display = 'flex';
+
+        // 기존 댓글 내용을 텍스트 에어리어에 채우기
+        const textarea = document.getElementById('editCommentContent');
+        textarea.value = content;
+
+        // 폼 Action URL을 해당 댓글 ID에 맞춰서 동적으로 변경
+        const actionUrl = `/projects/${projectId}/tasks/${taskId}/comments/${commentId}`;
+        document.getElementById('editCommentForm').action = actionUrl;
+
+        setTimeout(() => textarea.focus(), 100);
+    }
+    function closeEditCommentModal() {
+        editCommentModal.style.display = 'none';
+    }
+
+    // 바탕 클릭 시 모달 닫기
+    window.onclick = function(event) {
+        if (event.target === editModal) closeEditModal();
+        if (event.target === editCommentModal) closeEditCommentModal();
+    }
+</script>
+
+</body>
+</html>
