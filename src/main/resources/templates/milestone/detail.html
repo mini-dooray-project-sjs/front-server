@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${milestone.name} + ' - 마일스톤 상세'">마일스톤 상세</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 40px; background-color: #f8f9fa; color: #333; }
+
+        /* 헤더 영역 */
+        .header-container { display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; padding: 20px 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .title-area { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .id-badge { background-color: #e9ecef; color: #495057; padding: 5px 10px; border-radius: 6px; font-weight: bold; font-size: 0.9em; }
+        .main-title { margin: 0; font-size: 24px; font-weight: bold; color: #1f2937; }
+
+        /* 마일스톤 상태 뱃지 */
+        .status-badge { padding: 5px 12px; border-radius: 15px; font-size: 0.85em; font-weight: bold; }
+        .status-OPEN { background-color: #e3f2fd; color: #0d47a1; }
+        .status-IN_PROGRESS { background-color: #fff3cd; color: #856404; }
+        .status-CLOSED { background-color: #f8d7da; color: #721c24; }
+
+        .btn-back { text-decoration: none; background-color: #f1f3f5; color: #495057; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9em; transition: 0.2s; }
+        .btn-back:hover { background-color: #e9ecef; }
+
+        /* 액션 버튼 */
+        .btn-sm { padding: 8px 16px; border-radius: 4px; font-size: 0.9em; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
+        .btn-edit { background-color: #fcc419; color: #fff; }
+        .btn-edit:hover { background-color: #fab005; }
+        .btn-delete { background-color: #fa5252; color: #fff; }
+        .btn-delete:hover { background-color: #e03131; }
+
+        /* 카드 레이아웃 */
+        .card { background-color: #ffffff; border-radius: 8px; padding: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px; max-width: 800px; }
+        .card-title { margin-top: 0; margin-bottom: 15px; font-size: 16px; font-weight: bold; border-bottom: 2px solid #f1f3f5; padding-bottom: 10px; color: #868e96; }
+        .content-box { font-size: 16px; color: #343a40; }
+
+        /* 수정 모달창 */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background-color: white; padding: 30px; border-radius: 8px; width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .modal-content h3 { margin-top: 0; margin-bottom: 20px; color: #333; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-size: 0.9em; font-weight: 600; color: #495057; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+        .btn-modal-cancel { background-color: #f1f3f5; color: #495057; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-modal-submit { background-color: #0056b3; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="header-container">
+    <div class="title-area">
+        <span class="id-badge" th:text="'M-' + ${milestone.milestoneId}">M-1</span>
+        <h1 class="main-title" th:text="${milestone.name}">스프린트 1</h1>
+
+        <span th:class="'status-badge status-' + ${milestone.status.name()}" th:text="${milestone.status.name()}">OPEN</span>
+
+        <div style="display: flex; gap: 8px; margin-left: 20px;">
+            <button type="button" class="btn-sm btn-edit" onclick="openEditModal()">수정</button>
+
+            <form th:action="@{/projects/{projectId}/milestones/{milestoneId}(projectId=${projectId}, milestoneId=${milestone.milestoneId})}" method="post" style="margin: 0;" onsubmit="return confirm('이 마일스톤을 삭제하시겠습니까?');">
+                <input type="hidden" name="_method" value="delete">
+                <button type="submit" class="btn-sm btn-delete">삭제</button>
+            </form>
+        </div>
+    </div>
+
+    <a th:href="@{/projects/{projectId}(projectId=${projectId})}" class="btn-back">← 프로젝트로 돌아가기</a>
+</div>
+
+<div class="card">
+    <div class="card-title">마일스톤 요약</div>
+    <div class="content-box">
+        <p><strong>마일스톤 이름:</strong> <span th:text="${milestone.name}"></span></p>
+        <p><strong>현재 상태:</strong> <span th:text="${milestone.status.name()}"></span></p>
+    </div>
+</div>
+
+<div id="editMilestoneModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>마일스톤 수정</h3>
+        <form th:action="@{/projects/{projectId}/milestones/{milestoneId}(projectId=${projectId}, milestoneId=${milestone.milestoneId})}" method="post">
+
+            <div class="form-group">
+                <label for="name">마일스톤 이름</label>
+                <input type="text" id="name" name="name" th:value="${milestone.name}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="status">마일스톤 상태</label>
+                <select id="status" name="status">
+                    <option value="OPEN" th:selected="${milestone.status.name() == 'OPEN'}">OPEN (진행 예정)</option>
+                    <option value="IN_PROGRESS" th:selected="${milestone.status.name() == 'IN_PROGRESS'}">IN_PROGRESS (진행 중)</option>
+                    <option value="CLOSED" th:selected="${milestone.status.name() == 'CLOSED'}">CLOSED (종료)</option>
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeEditModal()">취소</button>
+                <button type="submit" class="btn-modal-submit">수정 완료</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const editModal = document.getElementById('editMilestoneModal');
+
+    function openEditModal() {
+        editModal.style.display = 'flex';
+        setTimeout(() => editModal.querySelector('input').focus(), 100);
+    }
+    function closeEditModal() {
+        editModal.style.display = 'none';
+    }
+
+    // 바탕 클릭 시 모달 닫기
+    window.onclick = function(event) {
+        if (event.target === editModal) closeEditModal();
+    }
+</script>
+
+</body>
+</html>

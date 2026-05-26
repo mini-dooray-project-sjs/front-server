@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${project.name} + ' - 상세조회'">프로젝트 상세</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 40px; background-color: #f8f9fa; color: #333; }
+
+    /* 헤더 영역 */
+    .header-container { display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; padding: 20px 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px; }
+    .project-title-area { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+    .project-name { margin: 0; font-size: 24px; font-weight: bold; }
+    .status-badge { background-color: #e3f2fd; color: #0d47a1; padding: 5px 12px; border-radius: 15px; font-size: 0.85em; font-weight: bold; }
+
+    .btn-back { text-decoration: none; background-color: #f1f3f5; color: #495057; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 0.9em; transition: background-color 0.2s; }
+    .btn-back:hover { background-color: #e9ecef; }
+
+    /* 공통 버튼 스타일 */
+    .btn-sm { padding: 6px 12px; border-radius: 4px; font-size: 0.85em; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; }
+    .btn-edit { background-color: #fcc419; color: #fff; }
+    .btn-edit:hover { background-color: #fab005; }
+    .btn-delete { background-color: #fa5252; color: #fff; }
+    .btn-delete:hover { background-color: #e03131; }
+    .btn-add-member { background-color: #e7f5ff; color: #1971c2; padding: 4px 10px; font-size: 0.8em; }
+    .btn-add-member:hover { background-color: #d0ebff; }
+    .btn-remove-member { background-color: transparent; color: #fa5252; border: 1px solid #fa5252; padding: 2px 6px; font-size: 0.7em; margin-left: 5px; }
+    .btn-remove-member:hover { background-color: #fff5f5; }
+
+    .btn-create-task { background-color: #0056b3; color: white; padding: 6px 12px; font-size: 0.85em; border-radius: 4px; border: none; cursor: pointer; font-weight: 600; }
+    .btn-create-task:hover { background-color: #004085; }
+
+    /* 메인 레이아웃 및 카드 공통 */
+    .dashboard-grid { display: grid; grid-template-columns: 7fr 3fr; gap: 25px; }
+    .card { background-color: #ffffff; border-radius: 8px; padding: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 25px; }
+    .card-header-flex { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f3f5; padding-bottom: 10px; margin-bottom: 20px; }
+    .card-title { margin: 0; font-size: 18px; font-weight: bold; color: #495057; }
+
+    /* 업무(Task) 테이블 및 요소들 */
+    .task-table { width: 100%; border-collapse: collapse; }
+    .task-table th, .task-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid #e9ecef; }
+    .task-table th { background-color: #f8f9fa; color: #495057; font-weight: 600; }
+    .task-row { transition: background-color 0.2s; }
+    .task-row:hover { background-color: #fff9db; cursor: pointer; }
+
+    .comment-count { background-color: #f1f3f5; color: #868e96; font-size: 0.85em; padding: 2px 6px; border-radius: 4px; margin-left: 5px; font-weight: bold; }
+
+    /* 태그 뱃지 스타일 */
+    .tag-badge { display: inline-block; background-color: #f3f0ff; color: #7048e8; font-size: 0.75em; padding: 3px 8px; border-radius: 4px; margin-right: 4px; font-weight: 600; transition: 0.2s; }
+    .editable-tag:hover { cursor: pointer; opacity: 0.8; outline: 1px solid #7048e8; }
+    .sidebar-tag-box { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* 멤버/마일스톤 리스트 */
+    .member-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #e9ecef; }
+    .member-item:last-child { border-bottom: none; }
+    .member-info-left { display: flex; align-items: center; gap: 8px; }
+    .member-id { font-weight: 500; }
+    .badge-admin { background-color: #ffe3e3; color: #c92a2a; font-size: 0.75em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
+    .badge-member { background-color: #e3fafc; color: #0b7285; font-size: 0.75em; padding: 3px 8px; border-radius: 10px; font-weight: bold; }
+
+    .milestone-item { margin-bottom: 12px; padding: 8px; border-radius: 4px; transition: background-color 0.2s; border: 1px solid transparent; }
+    .milestone-item:hover { background-color: #f8f9fa; border-color: #e9ecef; cursor: pointer; }
+    .milestone-info { display: flex; justify-content: space-between; font-size: 0.95em; margin-bottom: 4px; }
+    .milestone-status { font-size: 0.8em; color: #868e96; }
+
+    /* 모달(Modal) 전용 스타일 */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center; z-index: 1000; }
+    .modal-content { background-color: white; padding: 30px; border-radius: 8px; width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto; }
+    .modal-content h3 { margin-top: 0; margin-bottom: 20px; color: #333; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-size: 0.9em; font-weight: 600; color: #495057; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px; }
+    .checkbox-item { display: flex; align-items: center; font-size: 14px; color: #495057; }
+    .checkbox-item input { margin-right: 5px; }
+
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+    .modal-actions-between { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; }
+    .btn-modal-cancel { background-color: #f1f3f5; color: #495057; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+    .btn-modal-submit { background-color: #0056b3; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="header-container">
+  <div class="project-title-area">
+    <h1 class="project-name" th:text="${project.name}">프로젝트 명</h1>
+    <span class="status-badge" th:text="${project.status}">ACTIVE</span>
+    <span th:if="${project.admin}" class="badge-admin">내가 관리자</span>
+
+    <div th:if="${project.admin}" style="display: flex; gap: 8px; margin-left: 10px;">
+      <button type="button" class="btn-sm btn-edit" onclick="openEditModal()">수정</button>
+
+      <form th:action="@{/projects/{id}(id=${project.projectId()})}" method="post" style="margin: 0;" onsubmit="return confirm('정말로 이 프로젝트를 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.');">
+        <input type="hidden" name="_method" value="delete">
+        <button type="submit" class="btn-sm btn-delete">삭제</button>
+      </form>
+    </div>
+  </div>
+
+  <a th:href="@{/projects}" class="btn-back">← 목록으로</a>
+</div>
+
+<div class="dashboard-grid">
+
+  <div class="left-column">
+    <div class="card">
+      <div class="card-header-flex">
+        <h2 class="card-title" style="border: none; padding: 0; margin: 0;">업무 목록 (Tasks)</h2>
+        <button type="button" class="btn-create-task" onclick="openCreateTaskModal()">+ 업무 생성</button>
+      </div>
+
+      <table class="task-table">
+        <thead>
+        <tr>
+          <th style="width: 8%;">ID</th>
+          <th style="width: 50%;">업무 제목</th>
+          <th style="width: 20%;">마일스톤</th>
+          <th style="width: 22%;">태그</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="task-row" th:each="task : ${tasks}"
+            th:data-url="@{/projects/{projectId}/tasks/{taskId}(projectId=${project.projectId()}, taskId=${task.taskId})}"
+            onclick="location.href=this.getAttribute('data-url')">
+          <td th:text="${task.taskId}">10</td>
+          <td>
+            <span th:text="${task.title}">할 일 제목</span>
+            <span class="comment-count" th:if="${task.commentCount > 0}" th:text="'+' + ${task.commentCount}">+3</span>
+          </td>
+          <td th:text="${task.milestoneName != null ? task.milestoneName : '-'}">마일스톤A</td>
+          <td>
+            <span class="tag-badge" th:each="tStr : ${task.tags}" th:text="${tStr}">기능</span>
+            <span th:if="${#lists.isEmpty(task.tags)}" style="color: #ccc; font-size: 0.9em;">-</span>
+          </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(tasks)}">
+          <td colspan="4" style="text-align: center; color: #868e96; padding: 40px 0;">
+            등록된 업무가 없습니다. 첫 번째 업무를 생성해 보세요!
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="right-column">
+
+    <div class="card">
+      <div class="card-header-flex">
+        <h2 class="card-title" style="border: none; padding: 0; margin: 0;">참여 멤버</h2>
+        <button type="button" th:if="${project.admin}" class="btn-sm btn-add-member" onclick="openMemberModal()">+ 멤버 초대</button>
+      </div>
+
+      <div class="member-list">
+        <div class="member-item" th:each="member : ${members}">
+          <div class="member-info-left">
+            <span class="member-id" th:text="${member.userId}">user123</span>
+            <span th:if="${member.admin}" class="badge-admin">관리자</span>
+            <span th:unless="${member.admin}" class="badge-member">멤버</span>
+          </div>
+
+          <form th:if="${project.admin and member.userId != userId}"
+                th:action="@{/projects/{projectId}/members/{memberId}(projectId=${project.projectId()}, memberId=${member.userId})}"
+                method="post" style="margin: 0;"
+                onsubmit="return confirm('이 멤버를 프로젝트에서 제외하시겠습니까?');">
+            <input type="hidden" name="_method" value="delete">
+            <button type="submit" class="btn-sm btn-remove-member">추방</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-flex">
+        <h2 class="card-title" style="border: none; padding: 0; margin: 0;">마일스톤</h2>
+        <button type="button" th:if="${project.admin}" class="btn-sm btn-add-member" onclick="openCreateMilestoneModal()">+ 마일스톤 추가</button>
+      </div>
+
+      <div th:each="milestone : ${milestones}"
+           class="milestone-item"
+           th:data-url="@{/projects/{projectId}/milestones/{milestoneId}(projectId=${project.projectId()}, milestoneId=${milestone.milestoneId})}"
+           onclick="location.href=this.getAttribute('data-url')">
+        <div class="milestone-info">
+          <span th:text="${milestone.name}" style="font-weight: 500;">스프린트 1</span>
+          <span class="milestone-status" th:text="${milestone.status}">COMPLETED</span>
+        </div>
+      </div>
+      <div th:if="${#lists.isEmpty(milestones)}" style="color: #868e96; text-align: center; font-size: 0.9em;">
+        등록된 마일스톤이 없습니다.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header-flex">
+        <h2 class="card-title" style="border: none; padding: 0; margin: 0;">전체 태그</h2>
+        <button type="button" th:if="${project.admin}" class="btn-sm btn-add-member" onclick="openCreateTagModal()">+ 태그 추가</button>
+      </div>
+
+      <div class="sidebar-tag-box">
+        <span th:if="${project.admin}" class="tag-badge editable-tag" th:each="tag : ${tags}"
+              th:text="${tag.name}"
+              th:data-tag-id="${tag.tagId}"
+              th:data-tag-name="${tag.name}"
+              th:data-project-id="${project.projectId()}"
+              onclick="openEditTagModal(this.getAttribute('data-tag-id'), this.getAttribute('data-tag-name'), this.getAttribute('data-project-id'))"
+              title="클릭하여 수정/삭제">태그명</span>
+
+        <span th:unless="${project.admin}" class="tag-badge" th:each="tag : ${tags}" th:text="${tag.name}">태그명</span>
+      </div>
+      <div th:if="${#lists.isEmpty(tags)}" style="color: #868e96; text-align: center; font-size: 0.9em; width: 100%;">
+        등록된 태그가 없습니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="editProjectModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>프로젝트 수정</h3>
+    <form th:action="@{/projects/{id}(id=${project.projectId()})}" method="post">
+      <div class="form-group">
+        <label for="name">프로젝트 이름</label>
+        <input type="text" id="name" name="name" th:value="${project.name}" required>
+      </div>
+      <div class="form-group">
+        <label for="status">프로젝트 상태</label>
+        <select id="status" name="status">
+          <option value="ACTIVE" th:selected="${project.status.name() == 'ACTIVE'}">ACTIVE (활성)</option>
+          <option value="DORMANT" th:selected="${project.status.name() == 'DORMANT'}">DORMANT (휴면)</option>
+          <option value="CLOSED" th:selected="${project.status.name() == 'CLOSED'}">CLOSED (종료)</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-modal-cancel" onclick="closeEditModal()">취소</button>
+        <button type="submit" class="btn-modal-submit">수정하기</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="addMemberModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>멤버 초대</h3>
+    <form th:action="@{/projects/{projectId}/members(projectId=${project.projectId()})}" method="post">
+      <div class="form-group">
+        <label for="userId">초대할 멤버 아이디</label>
+        <input type="text" id="userId" name="userId" placeholder="유저 아이디를 정확히 입력하세요" required>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-modal-cancel" onclick="closeMemberModal()">취소</button>
+        <button type="submit" class="btn-modal-submit">초대하기</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="createTaskModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>새 업무 생성</h3>
+    <form th:action="@{/projects/{projectId}/tasks(projectId=${project.projectId()})}" method="post">
+      <div class="form-group">
+        <label for="taskTitle">업무 제목</label>
+        <input type="text" id="taskTitle" name="title" required placeholder="예: 로그인 기능 개발">
+      </div>
+      <div class="form-group">
+        <label for="taskContent">업무 내용</label>
+        <textarea id="taskContent" name="content" required style="resize: vertical; min-height: 80px;" placeholder="상세 내용을 입력하세요"></textarea>
+      </div>
+      <div class="form-group">
+        <label for="taskMilestone">마일스톤 지정</label>
+        <select id="taskMilestone" name="milestoneId">
+          <option value="">-- 마일스톤 선택 해제 --</option>
+          <option th:each="ms : ${milestones}" th:value="${ms.milestoneId}" th:text="${ms.name}"></option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>태그 선택</label>
+        <div class="checkbox-group">
+          <label th:each="t : ${tags}" class="checkbox-item">
+            <input type="checkbox" name="tagIds" th:value="${t.tagId}">
+            <span th:text="${t.name}"></span>
+          </label>
+        </div>
+        <div th:if="${#lists.isEmpty(tags)}" style="font-size: 13px; color: #868e96;">
+          프로젝트에 등록된 태그가 없습니다.
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-modal-cancel" onclick="closeCreateTaskModal()">취소</button>
+        <button type="submit" class="btn-modal-submit">생성하기</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="createMilestoneModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>새 마일스톤 생성</h3>
+    <form th:action="@{/projects/{projectId}/milestones(projectId=${project.projectId()})}" method="post">
+      <div class="form-group">
+        <label for="milestoneName">마일스톤 이름</label>
+        <input type="text" id="milestoneName" name="name" required placeholder="예: 스프린트 1주차">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-modal-cancel" onclick="closeCreateMilestoneModal()">취소</button>
+        <button type="submit" class="btn-modal-submit">생성하기</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="createTagModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>새 태그 생성</h3>
+    <form th:action="@{/projects/{projectId}/tags(projectId=${project.projectId()})}" method="post">
+      <div class="form-group">
+        <label for="tagName">태그 이름</label>
+        <input type="text" id="tagName" name="name" required placeholder="예: 백엔드">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-modal-cancel" onclick="closeCreateTagModal()">취소</button>
+        <button type="submit" class="btn-modal-submit">생성하기</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="editTagModal" class="modal-overlay">
+  <div class="modal-content">
+    <h3>태그 관리</h3>
+
+    <form id="editTagForm" method="post">
+      <div class="form-group">
+        <label for="editTagName">태그 이름</label>
+        <input type="text" id="editTagName" name="name" required>
+      </div>
+
+      <div class="modal-actions-between">
+        <button type="button" class="btn-sm btn-delete" onclick="submitDeleteTagForm()">태그 삭제</button>
+        <div>
+          <button type="button" class="btn-modal-cancel" onclick="closeEditTagModal()">취소</button>
+          <button type="submit" class="btn-modal-submit">수정 완료</button>
+        </div>
+      </div>
+    </form>
+
+    <form id="deleteTagForm" method="post" style="display: none;">
+      <input type="hidden" name="_method" value="delete">
+    </form>
+
+  </div>
+</div>
+
+<script>
+  const editModal = document.getElementById('editProjectModal');
+  const memberModal = document.getElementById('addMemberModal');
+  const createTaskModal = document.getElementById('createTaskModal');
+  const createMilestoneModal = document.getElementById('createMilestoneModal');
+  const createTagModal = document.getElementById('createTagModal');
+  const editTagModal = document.getElementById('editTagModal');
+
+  function openEditModal() { editModal.style.display = 'flex'; }
+  function closeEditModal() { editModal.style.display = 'none'; }
+
+  function openMemberModal() {
+    memberModal.style.display = 'flex';
+    setTimeout(() => memberModal.querySelector('input').focus(), 100);
+  }
+  function closeMemberModal() {
+    memberModal.style.display = 'none';
+    memberModal.querySelector('input').value = '';
+  }
+
+  function openCreateTaskModal() {
+    createTaskModal.style.display = 'flex';
+    setTimeout(() => createTaskModal.querySelector('input').focus(), 100);
+  }
+  function closeCreateTaskModal() {
+    createTaskModal.style.display = 'none';
+    createTaskModal.querySelector('form').reset();
+  }
+
+  function openCreateMilestoneModal() {
+    createMilestoneModal.style.display = 'flex';
+    setTimeout(() => createMilestoneModal.querySelector('input').focus(), 100);
+  }
+  function closeCreateMilestoneModal() {
+    createMilestoneModal.style.display = 'none';
+    createMilestoneModal.querySelector('form').reset();
+  }
+
+  function openCreateTagModal() {
+    createTagModal.style.display = 'flex';
+    setTimeout(() => createTagModal.querySelector('input').focus(), 100);
+  }
+  function closeCreateTagModal() {
+    createTagModal.style.display = 'none';
+    createTagModal.querySelector('form').reset();
+  }
+
+  function openEditTagModal(tagId, tagName, projectId) {
+    editTagModal.style.display = 'flex';
+
+    const editTagNameInput = document.getElementById('editTagName');
+    editTagNameInput.value = tagName;
+
+    const actionUrl = `/projects/${projectId}/tags/${tagId}`;
+    document.getElementById('editTagForm').action = actionUrl;
+    document.getElementById('deleteTagForm').action = actionUrl;
+
+    setTimeout(() => editTagNameInput.focus(), 100);
+  }
+  function closeEditTagModal() {
+    editTagModal.style.display = 'none';
+  }
+  function submitDeleteTagForm() {
+    if(confirm('정말로 이 태그를 삭제하시겠습니까?\n이 태그가 사용된 모든 업무에서도 삭제됩니다.')) {
+      document.getElementById('deleteTagForm').submit();
+    }
+  }
+
+  window.onclick = function(event) {
+    if (event.target === editModal) closeEditModal();
+    if (event.target === memberModal) closeMemberModal();
+    if (event.target === createTaskModal) closeCreateTaskModal();
+    if (event.target === createMilestoneModal) closeCreateMilestoneModal();
+    if (event.target === createTagModal) closeCreateTagModal();
+    if (event.target === editTagModal) closeEditTagModal();
+  }
+</script>
+
+</body>
+</html>
