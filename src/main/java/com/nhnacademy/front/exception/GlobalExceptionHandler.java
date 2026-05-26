@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @Slf4j
 @ControllerAdvice
@@ -58,6 +59,15 @@ public class GlobalExceptionHandler {
 
         // 에러 페이지로 이동
         return "error/error";
+    }
+
+    // 브라우저 확장/자동 요청으로 인해 발생하는 정적 리소스 누락 예외 처리
+    @ExceptionHandler(NoResourceFoundException.class)
+    public void handleNoResourceFound(NoResourceFoundException ex, HttpServletResponse resp) {
+        // 브라우저 확장/자동 요청으로 발생하는 정적 리소스 누락 -> 디버그로만 기록
+        log.debug("NoResourceFoundException: {}", ex.getMessage());
+        // 404 상태코드만 반환
+        resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
     }
 
     // 그 외의 예외 처리 - 예기치 못한 오류에 대한 일반적인 에러 페이지로 이동
