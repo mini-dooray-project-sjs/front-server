@@ -37,6 +37,14 @@ public class ProjectClient {
             return List.of();
         }
     }
+//    public List<ProjectResponse> getProjects() {
+//        return restTemplate.exchange(
+//                taskUrl + "/projects",
+//                HttpMethod.GET,
+//                null,
+//                new ParameterizedTypeReference<List<ProjectResponse>>() {
+//                }).getBody();
+//    }
 
     // 프로젝트 단건 조회
     public ProjectResponse getProject(Long projectId) {

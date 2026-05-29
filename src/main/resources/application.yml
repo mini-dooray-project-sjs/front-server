@@ -12,11 +12,15 @@ server:
 logging:
   level:
     root: info
+#    org.springframework.web.client.RestTemplate: debug
 
 api:
   gateway:
     url: http://localhost:8000
+  auth:
+    url: ${api.gateway.url}/api/auth
   account:
     url: ${api.gateway.url}/api/accounts
   task:
     url: ${api.gateway.url}/api/tasks
+
