@@ -1,4 +1,4 @@
-package com.nhnacademy.front.dto.auth;
+package com.nhnacademy.front.dto.user;
 
 public enum UserStatus {
     ACTIVE,

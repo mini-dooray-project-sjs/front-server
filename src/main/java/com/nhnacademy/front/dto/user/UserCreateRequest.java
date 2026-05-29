@@ -1,6 +1,5 @@
 package com.nhnacademy.front.dto.user;
 
-import com.nhnacademy.front.dto.auth.UserRole;
 import lombok.Builder;
 
 @Builder
