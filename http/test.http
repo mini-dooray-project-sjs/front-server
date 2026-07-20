@@ -6,3 +6,7 @@ Content-Type: application/json
   "userId": "admin",
   "password": "pwd123"
 }
+
+### Projects
+GET localhost:8080/projects
+Authorization: Barer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJST0xFX0FETUlOIiwiaWF0IjoxNzgwMDE2NTk5LCJleHAiOjE3ODAwMjAxOTl9.pE79x1931rQxKTlVdgsavkxPq8HAcKc3Vk0k5-B9pm1UyWiQnIjM3Zjwpzz3sh0fMb2BXFdclxgC0lPGZs4NHQ

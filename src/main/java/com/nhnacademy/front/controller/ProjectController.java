@@ -1,11 +1,9 @@
 package com.nhnacademy.front.controller;
 
 import com.nhnacademy.front.client.*;
-import com.nhnacademy.front.dto.auth.LoginUserResponse;
 import com.nhnacademy.front.dto.milestone.MilestoneResponse;
 import com.nhnacademy.front.dto.project.ProjectCreateRequest;
 import com.nhnacademy.front.dto.project.ProjectResponse;
-import com.nhnacademy.front.dto.project.ProjectStatus;
 import com.nhnacademy.front.dto.project.ProjectUpdateRequest;
 import com.nhnacademy.front.dto.project_member.ProjectMemberResponse;
 import com.nhnacademy.front.dto.tag.TagResponse;
@@ -24,7 +22,6 @@ import java.util.List;
 @RequestMapping("/projects")
 public class ProjectController {
 
-    private final AuthClient authClient;
     private final ProjectClient projectClient;
     private final ProjectMemberClient projectMemberClient;
     private final MilestoneClient milestoneClient;
@@ -34,23 +31,11 @@ public class ProjectController {
     // 프로젝트 목록 페이지
     @GetMapping
     public String projectList(
-            Model model,
-            @CookieValue(name="SESSION", required = false) String sessionId
+            Model model
     ) {
-        if(sessionId==null || sessionId.isEmpty()) {
-            return "redirect:/login";
-        }
-
-        LoginUserResponse userResponse=authClient.getLoginUser();
-        String userId=userResponse.userId();
-        String role=userResponse.role().name();
-
-
         List<ProjectResponse> resp=projectClient.getProjects();
         log.info("Project List: {}", resp);
 
-        model.addAttribute("userId", userId);
-        model.addAttribute("role", role);
         model.addAttribute("projects", resp);
 
         return "project/list";

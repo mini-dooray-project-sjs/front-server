@@ -16,6 +16,7 @@ public class UserClient {
     @Value("${api.account.url}")
     private String accountUrl;
 
+    // 회원가입
     public UserResponse register(UserCreateRequest req) {
         return restTemplate.postForObject(
                 accountUrl + "/users",
